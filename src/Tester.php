@@ -59,12 +59,12 @@ class Tester {
         $goals = $this->getGoals();
 
         // Detect goal completion based on the current url.
-        if (in_array($to, $goals) || in_array('/' . $to, $goals)) {
+        if (in_array($to, $goals) or in_array('/' . $to, $goals)) {
             $this->complete($to, $checking);
         }
 
         // Detect goal completion based on the current route name.
-        if ($route = Route::currentRouteName() && in_array($route, $goals)) {
+        if ($route = Route::currentRouteName() and in_array($route, $goals)) {
             $this->complete($route, $checking);
         }
     }
