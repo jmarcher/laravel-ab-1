@@ -135,7 +135,7 @@ class Tester {
         if ($this->session->get("completed_$name")) return;
 
         // Verify that the goals are in the database.
-        $this->checkGoals($checking)
+        $this->checkGoals($checking);
 
         $goal = Goal::whereHas('experiment', function ($query)
         {
