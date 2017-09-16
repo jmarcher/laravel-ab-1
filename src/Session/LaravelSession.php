@@ -1,4 +1,6 @@
-<?php namespace Jenssegers\AB\Session;
+<?php
+
+namespace Jenssegers\AB\Session;
 
 use Illuminate\Support\Facades\Session;
 
@@ -23,6 +25,11 @@ class LaravelSession implements SessionInterface {
      */
     public function __construct()
     {
+        // Set the sessionName based on the config.
+        if (Config::get('ab.cookie')) {
+            $this->sessionName = Config::get('ab.cookie');
+        }
+
         $this->data = Session::get($this->sessionName, []);
     }
 

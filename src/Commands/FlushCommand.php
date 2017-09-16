@@ -3,8 +3,7 @@
 use Jenssegers\AB\Models\Experiment;
 use Jenssegers\AB\Models\Goal;
 
-use Config;
-use DB;
+use DB, Config, Schema, Blueprint;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -44,8 +43,11 @@ class FlushCommand extends Command {
     {
         $connection = Config::get('ab::connection');
 
-        DB::connection($connection)->table('experiments')->delete();
-        DB::connection($connection)->table('goals')->delete();
+        // DB::connection($connection)->table('ab_experiments')->truncate();
+        // DB::connection($connection)->table('ab_goals')->truncate();
+
+        Schema::dropIfExists('ab_experiments');
+        Schema::dropIfExists('ab_goals');
 
         $this->call('ab:install');
 

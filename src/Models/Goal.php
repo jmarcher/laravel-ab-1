@@ -1,30 +1,29 @@
-<?php namespace Jenssegers\AB\Models;
+<?php
+
+namespace Jenssegers\AB\Models;
 
 use Illuminate\Support\Facades\Config;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Model;
 
-class Goal extends Eloquent {
-
-    protected $primaryKey = 'name';
-
-    protected $fillable = ['name', 'experiment', 'count'];
-
+class Goal extends Model
+{
     public function __construct(array $attributes = array())
     {
         parent::__construct($attributes);
 
         // Set the connection based on the config.
-        $this->connection = Config::get('ab::connection');
+        $this->connection = Config::get('ab.connection');
     }
 
-    public function scopeActive($query)
-    {
-        if ($experiments = Config::get('ab::experiments'))
-        {
-            return $query->whereIn('experiment', Config::get('ab::experiments'));
-        }
+    protected $table = 'ab_goals';
 
-        return $query;
+    protected $primaryKey = 'id';
+
+    protected $fillable = ['name', 'experiment_id', 'count'];
+
+    public function experiment()
+    {
+        return $this->belongsTo('Jenssegers\AB\Models\Experiment', 'experiment_id', 'id');
     }
 
 }

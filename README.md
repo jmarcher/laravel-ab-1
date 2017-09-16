@@ -1,7 +1,7 @@
-Laravel 5.1 A/B Testing
+Laravel 5.2 A/B Testing
 =====================
 
-[![Build Status](http://img.shields.io/travis/rafelsanso/laravel-ab.svg)](https://travis-ci.org/rafelsanso/laravel-ab) [![Coverage Status](http://img.shields.io/coveralls/rafelsanso/laravel-ab.svg)](https://coveralls.io/r/rafelsanso/laravel-ab)
+[![Build Status](http://img.shields.io/travis/rankarpan/laravel-ab.svg)](https://travis-ci.org/rankarpan/laravel-ab) [![Coverage Status](http://img.shields.io/coveralls/rankarpan/laravel-ab.svg)](https://coveralls.io/r/rankarpan/laravel-ab)
 
 A server-side A/B testing tool for Laravel, a great free alternative for services such as optimizely. Use A/B testing to figure out which content works, and which doesn't.
 
@@ -15,7 +15,7 @@ Add this repository to composer.json:
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/rafelsanso/laravel-ab"
+            "url": "https://github.com/rankarpan/laravel-ab"
         }
     ],
 
@@ -59,9 +59,17 @@ Without goals, each experiment will track the number of visitors that saw the ex
     'goals' => [
         'pricing/order',
         'contact'
-    ]
+    ],
 
 Your goals can be relative urls, named routes or can be triggered manually.
+
+### Lifetime
+
+    'lifetime' => 60,
+
+### Cookie
+
+    'cookie' => 'ab',
 
 Preparing the A/B test database
 -------------------------------
@@ -157,9 +165,17 @@ Return true if has more than 1 experiment into table "experiments".
 
 Return the name of the current session experiment.
 
+**AB::clearSession()**
+
+Clear all the current session experiment.
+
+**AB::track($request)**
+
+Track clicked links.
+
 
 Advanced
 --------
 
-Edited and exported to Laravel 5.1 by @rafelsanso
+Edited and exported to Laravel 5.2 by @rankarpan
 

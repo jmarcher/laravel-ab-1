@@ -1,5 +1,8 @@
-<?php namespace Jenssegers\AB\Session;
+<?php
 
+namespace Jenssegers\AB\Session;
+
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 
 class CookieSession implements SessionInterface {
@@ -30,6 +33,16 @@ class CookieSession implements SessionInterface {
      */
     public function __construct()
     {
+        // Set the minutes based on the config.
+        if (Config::get('ab.lifetime')) {
+            $this->minutes = Config::get('ab.lifetime');
+        }
+
+        // Set the cookieName based on the config.
+        if (Config::get('ab.cookie')) {
+            $this->cookieName = Config::get('ab.cookie');
+        }
+
         $this->data = Cookie::get($this->cookieName, []);
     }
 
@@ -56,9 +69,7 @@ class CookieSession implements SessionInterface {
      */
     public function clear()
     {
-        $this->data = [];
-
-        return Cookie::queue($this->cookieName, null, -2628000);
+        return Cookie::queue(Cookie::forget($this->cookieName));
     }
 
 }

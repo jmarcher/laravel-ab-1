@@ -1,4 +1,6 @@
-<?php namespace Jenssegers\AB\Session;
+<?php
+
+namespace Jenssegers\AB\Session;
 
 interface SessionInterface {
 

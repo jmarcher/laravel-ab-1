@@ -3,8 +3,7 @@
 use Jenssegers\AB\Models\Experiment;
 use Jenssegers\AB\Models\Goal;
 
-use Config;
-use Schema;
+use Config, Schema;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -44,10 +43,9 @@ class InstallCommand extends Command {
     {
         $connection = Config::get('ab::connection');
 
-        // Create experiments table.
-        if ( ! Schema::connection($connection)->hasTable('experiments'))
-        {
-            Schema::connection($connection)->create('experiments', function($table)
+        // Create ab_experiments table.
+        if ( ! Schema::connection($connection)->hasTable('ab_experiments')) {
+            Schema::connection($connection)->create('ab_experiments', function($table)
             {
                 $table->increments('id');
                 $table->string('name');
@@ -57,14 +55,13 @@ class InstallCommand extends Command {
             });
         }
 
-        // Create goals table.
-        if ( ! Schema::connection($connection)->hasTable('goals'))
-        {
-            Schema::connection($connection)->create('goals', function($table)
+        // Create ab_goals table.
+        if ( ! Schema::connection($connection)->hasTable('ab_goals')) {
+            Schema::connection($connection)->create('ab_goals', function($table)
             {
                 $table->increments('id');
                 $table->string('name');
-                $table->string('experiment');
+                $table->string('experiment_id')->index();
                 $table->integer('count')->unsigned()->default(0);
                 $table->timestamps();
             });
@@ -72,14 +69,14 @@ class InstallCommand extends Command {
 
         $this->info('Database schema initialized.');
 
-        $experiments = Config::get('ab')['experiments'];
+        $experiments = Config::get('ab.experiments');
 
         if ( ! $experiments or empty($experiments))
         {
             return $this->error('No experiments configured.');
         }
 
-        $goals = Config::get('ab')['goals'];
+        $goals = Config::get('ab.goals');
 
         if ( ! $goals or empty($goals))
         {
@@ -89,11 +86,11 @@ class InstallCommand extends Command {
         // Populate experiments and goals.
         foreach ($experiments as $experiment)
         {
-            Experiment::firstOrCreate(['name' => $experiment]);
+            $experiment = Experiment::firstOrCreate(['name' => $experiment]);
 
             foreach ($goals as $goal)
             {
-                Goal::firstOrCreate(['name' => $goal, 'experiment' => $experiment]);
+                Goal::firstOrCreate(['name' => $goal, 'experiment_id' => $experiment->id]);
             }
         }
 

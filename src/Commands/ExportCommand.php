@@ -43,8 +43,8 @@ class ExportCommand extends Command {
      */
     public function fire()
     {
-        $experiments = Experiment::active()->get();
-        $goals = array_unique(Goal::active()->orderBy('name')->lists('name'));
+        $experiments = Experiment::all();
+        $goals = array_unique(Goal::orderBy('name')->lists('name'));
 
         $columns = array_merge(['Experiment', 'Visitors', 'Engagement'], array_map('ucfirst', $goals));
 

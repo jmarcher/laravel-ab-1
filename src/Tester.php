@@ -1,4 +1,6 @@
-<?php namespace Jenssegers\AB;
+<?php
+
+namespace Jenssegers\AB;
 
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
@@ -57,14 +59,12 @@ class Tester {
         $goals = $this->getGoals();
 
         // Detect goal completion based on the current url.
-        if (in_array($to, $goals) or in_array('/' . $to, $goals))
-        {
+        if (in_array($to, $goals) or in_array('/' . $to, $goals)) {
             $this->complete($to);
         }
 
         // Detect goal completion based on the current route name.
-        if ($route = Route::currentRouteName() and in_array($route, $goals))
-        {
+        if ($route = Route::currentRouteName() and in_array($route, $goals)) {
             $this->complete($route);
         }
     }
@@ -79,10 +79,9 @@ class Tester {
     {
         // Get the existing or new experiment.
         try {
-            $experiment = $this->session->get('experiment') ?: $this->nextExperiment();
+            $experiment = $this->session->get('experiment') ? : $this->nextExperiment();
 
-            if (is_null($target))
-            {
+            if (is_null($target)) {
                 return $experiment;
             }
 
@@ -91,7 +90,6 @@ class Tester {
             \Log::error('Experiments on front may be deleted');
             return false;
         }
-
     }
 
     /**
@@ -104,9 +102,7 @@ class Tester {
         // Only interact once per experiment.
         if ($this->session->get('pageview')) return;
 
-        $experiment = Experiment::firstOrNew(['name' => $this->experiment()]);
-        $experiment->visitors++;
-        $experiment->save();
+        Experiment::where('name', $this->experiment())->increment('visitors');
 
         // Mark current experiment as interacted.
         $this->session->set('pageview', 1);
@@ -122,9 +118,7 @@ class Tester {
         // Only interact once per experiment.
         if ($this->session->get('interacted')) return;
 
-        $experiment = Experiment::firstOrNew(['name' => $this->experiment()]);
-        $experiment->engagement++;
-        $experiment->save();
+        Experiment::where('name', $this->experiment())->increment('engagement');
 
         // Mark current experiment as interacted.
         $this->session->set('interacted', 1);
@@ -140,8 +134,10 @@ class Tester {
         // Only complete once per experiment.
         if ($this->session->get("completed_$name")) return;
 
-        $goal = Goal::firstOrCreate(['name' => $name, 'experiment' => $this->experiment()]);
-        Goal::where('name', $name)->where('experiment', $this->experiment())->update(['count' => ($goal->count + 1)]);
+        $goal = Goal::whereHas('experiment', function ($query)
+        {
+           $query->where('name', $this->experiment());
+        })->where('name', $name)->increment('count');
 
         // Mark current experiment as completed.
         $this->session->set("completed_$name", 1);
@@ -154,8 +150,7 @@ class Tester {
      */
     public function setExperiment($experiment)
     {
-        if ($this->session->get('experiment') != $experiment)
-        {
+        if ($this->session->get('experiment') != $experiment) {
             $this->session->set('experiment', $experiment);
 
             // Increase pageviews for new experiment.
@@ -180,7 +175,7 @@ class Tester {
      */
     public function getGoals()
     {
-        return Config::get('ab', [])['goals'];
+        return Config::get('ab.goals');
     }
 
     /**
@@ -204,6 +199,16 @@ class Tester {
     }
 
     /**
+     * Clear the session instance.
+     *
+     * @return SessionInterface
+     */
+    public function clearSession()
+    {
+        return $this->session->clear();
+    }
+
+    /**
      * If an experiment has initialized get his string.
      *
      * @return string
@@ -212,13 +217,11 @@ class Tester {
     {
         // Verify that the experiments are in the database.
         $this->checkExperiments();
-        if ($this->session->get('experiment') != '')
-        {
-            $experiment =$this->session->get('experiment');
-        }
-        else
-        {
-            $experiment = Experiment::active()->orderBy('updated_at', 'asc')->firstOrFail();
+
+        if ( ! empty($this->session->get('experiment'))) {
+            $experiment = $this->session->get('experiment');
+        } else {
+            $experiment = Experiment::orderBy('visitors', 'asc')->firstOrFail();
             $experiment = $experiment->name;
         }
 
@@ -235,13 +238,13 @@ class Tester {
         // Verify that the experiments are in the database.
         $this->checkExperiments();
 
-        if ($experiment)
-        {
-            $experiment = Experiment::active()->findOrfail($experiment);
-        }
-        else
-        {
-            $experiment = Experiment::active()->orderBy('visitors', 'asc')->firstOrFail();
+        // Clear all session of experiment_, pageview_, interacted_, completed_
+        $this->clearSession();
+
+        if ($experiment) {
+            $experiment = Experiment::findOrfail($experiment);
+        } else {
+            $experiment = Experiment::orderBy('visitors', 'asc')->firstOrFail();
         }
 
         $this->session->set('experiment', $experiment->name);
@@ -261,11 +264,9 @@ class Tester {
     protected function checkExperiments()
     {
         // Check if the database contains all experiments.
-        if (Experiment::active()->count() != count($this->getExperiments()))
-        {
+        if (Experiment::count() != count($this->getExperiments())) {
             // Insert all experiments.
-            foreach ($this->getExperiments() as $experiment)
-            {
+            foreach ($this->getExperiments() as $experiment) {
                 Experiment::firstOrCreate(['name' => $experiment]);
             }
         }
