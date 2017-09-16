@@ -35,7 +35,7 @@ class Tester {
      * @param  Request $request
      * @return void
      */
-    public function track(Request $request)
+    public function track(Request $request, $checking = false)
     {
         // Don't track if there is no active experiment.
         if ( ! $this->session->get('experiment')) return;
@@ -59,13 +59,13 @@ class Tester {
         $goals = $this->getGoals();
 
         // Detect goal completion based on the current url.
-        if (in_array($to, $goals) or in_array('/' . $to, $goals)) {
-            $this->complete($to);
+        if (in_array($to, $goals) || in_array('/' . $to, $goals)) {
+            $this->complete($to, $checking);
         }
 
         // Detect goal completion based on the current route name.
-        if ($route = Route::currentRouteName() and in_array($route, $goals)) {
-            $this->complete($route);
+        if ($route = Route::currentRouteName() && in_array($route, $goals)) {
+            $this->complete($route, $checking);
         }
     }
 
@@ -75,11 +75,11 @@ class Tester {
      * @param  string  $target
      * @return bool|string
      */
-    public function experiment($target = null)
+    public function experiment($target = null, $checking = false)
     {
         // Get the existing or new experiment.
         try {
-            $experiment = $this->session->get('experiment') ? : $this->nextExperiment();
+            $experiment = $this->session->get('experiment') ? : $this->nextExperiment(null, $checking);
 
             if (is_null($target)) {
                 return $experiment;
@@ -129,10 +129,13 @@ class Tester {
      *
      * @return void
      */
-    public function complete($name)
+    public function complete($name, $checking = false)
     {
         // Only complete once per experiment.
         if ($this->session->get("completed_$name")) return;
+
+        // Verify that the goals are in the database.
+        $this->checkGoals($checking)
 
         $goal = Goal::whereHas('experiment', function ($query)
         {
@@ -148,13 +151,13 @@ class Tester {
      *
      * @param string $experiment
      */
-    public function setExperiment($experiment)
+    public function setExperiment($experiment, $checking = false)
     {
         if ($this->session->get('experiment') != $experiment) {
             $this->session->set('experiment', $experiment);
 
             // Increase pageviews for new experiment.
-            $this->nextExperiment($experiment);
+            $this->nextExperiment($experiment, $checking);
         }
     }
 
@@ -165,7 +168,7 @@ class Tester {
      */
     public function getExperiments()
     {
-        return Config::get('ab', [])['experiments'];
+        return Config::get('ab.experiments');
     }
 
     /**
@@ -213,15 +216,15 @@ class Tester {
      *
      * @return string
      */
-    public function currentExperiment()
+    public function currentExperiment($checking = false)
     {
         // Verify that the experiments are in the database.
-        $this->checkExperiments();
+        $this->checkExperiments($checking);
 
-        if ( ! empty($this->session->get('experiment'))) {
+        if ($this->session->get('experiment') != '') {
             $experiment = $this->session->get('experiment');
         } else {
-            $experiment = Experiment::orderBy('visitors', 'asc')->firstOrFail();
+            $experiment = Experiment::orderBy('updated_at', 'asc')->firstOrFail();
             $experiment = $experiment->name;
         }
 
@@ -233,10 +236,10 @@ class Tester {
      *
      * @return string
      */
-    protected function nextExperiment($experiment = null)
+    protected function nextExperiment($experiment = null, $checking = false)
     {
         // Verify that the experiments are in the database.
-        $this->checkExperiments();
+        $this->checkExperiments($checking);
 
         // Clear all session of experiment_, pageview_, interacted_, completed_
         $this->clearSession();
@@ -261,10 +264,10 @@ class Tester {
      *
      * @return void
      */
-    protected function checkExperiments()
+    protected function checkExperiments($checking = false)
     {
         // Check if the database contains all experiments.
-        if (Experiment::count() != count($this->getExperiments())) {
+        if ($checking && Experiment::count() != count($this->getExperiments())) {
             // Insert all experiments.
             foreach ($this->getExperiments() as $experiment) {
                 Experiment::firstOrCreate(['name' => $experiment]);
@@ -282,6 +285,27 @@ class Tester {
         $count = Experiment::count();
 
         return $count > 1;
+    }
+
+    /**
+     * Add goals to the database.
+     *
+     * @return void
+     */
+    protected function checkGoals($checking = false)
+    {
+        // Check if the database contains all goals.
+        if ($checking && Goal::count() != count($this->getGoals())) {
+
+            $experiments = Experiment::all();
+
+            // Insert all goals for particular experiment.
+            foreach ($experiments as $experiment) {
+                foreach ($this->getGoals() as $goal) {
+                    Goal::firstOrCreate(['name' => $goal, 'experiment_id' => $experiment->id]);
+                }
+            }
+        }
     }
 
 }
