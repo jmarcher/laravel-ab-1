@@ -36,9 +36,8 @@ class TesterServiceProvider extends ServiceProvider {
      * @return void
      */
     public function register()
-    {
-        $this->app['ab'] = $this->app->share(function($app)
-        {
+    {        
+        $this->app->singleton(Tester::class, function($app) {
             return new Tester(new CookieSession);
         });
 
