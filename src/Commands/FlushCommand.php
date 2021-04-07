@@ -41,7 +41,7 @@ class FlushCommand extends Command {
      */
     public function handle()
     {
-        $connection = Config::get('ab::connection');
+        $connection = Config::get('ab.connection');
 
         // DB::connection($connection)->table('ab_experiments')->truncate();
         // DB::connection($connection)->table('ab_goals')->truncate();
