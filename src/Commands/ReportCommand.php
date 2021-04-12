@@ -42,7 +42,7 @@ class ReportCommand extends Command {
     public function handle()
     {
         $experiments = Experiment::all();
-        $goals = array_unique(Goal::orderBy('name')->lists('name')->toArray());
+        $goals = array_unique(Goal::orderBy('name')->pluck('name')->toArray());
 
         $columns = array_merge(['Experiment', 'Visitors', 'Engagement'], array_map('ucfirst', $goals));
 
@@ -59,7 +59,7 @@ class ReportCommand extends Command {
                 number_format($engagement, 2) . " % (" . $experiment->engagement .")",
             ];
 
-            $results = $experiment->goals()->lists('count', 'name');
+            $results = $experiment->goals()->pluck('count', 'name');
 
             foreach ($goals as $column)
             {

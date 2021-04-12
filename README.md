@@ -1,4 +1,4 @@
-Laravel 5.2 A/B Testing
+Laravel 5.5 A/B Testing
 =====================
 
 A server-side A/B testing tool for Laravel, a great free alternative for services such as optimizely. Use A/B testing to figure out which content works, and which doesn't.
@@ -174,6 +174,4 @@ Track clicked links.
 
 Advanced
 --------
-
-Edited and exported to Laravel 5.2 by @rankarpan
 

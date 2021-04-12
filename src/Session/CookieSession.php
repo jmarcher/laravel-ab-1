@@ -43,7 +43,7 @@ class CookieSession implements SessionInterface {
             $this->cookieName = Config::get('ab.cookie');
         }
 
-        $this->data = Cookie::get($this->cookieName, []);
+        $this->data = decrypt(Cookie::get($this->cookieName, encrypt([])));
     }
 
     /**
@@ -61,7 +61,7 @@ class CookieSession implements SessionInterface {
     {
         $this->data[$name] = $value;
 
-        return Cookie::queue($this->cookieName, $this->data, $this->minutes);
+        return Cookie::queue($this->cookieName, encrypt($this->data), $this->minutes);
     }
 
     /**
